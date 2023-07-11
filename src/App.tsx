@@ -2,26 +2,39 @@ import { AppBar, Paper, ThemeProvider, Toolbar, Typography, CircularProgress, Co
 
 import LIGHT_THEME from './theme/light';
 import DARK_THEME from './theme/dark';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+import { useConnector } from "./connector";
 
 function App() {
+	const connector = useConnector();
+
 	const [darkMode] = useState(true);
 	const [servers, setServers] = useState<{
 		name: string;
 		online: boolean;
 		roughPing: number;
-	}[]>([
-		{
-			name: "A01",
-			online: true,
-			roughPing: 15
-		},
-		{
-			name: "A03",
-			online: false,
-			roughPing: 0
+		lastUpdated: number;
+	}[]>([]);
+
+	useEffect(() => {
+		let interval = setInterval(async () => {
+			let x = await connector.socket?.p.status();
+			if (x) {
+				let v = Object.entries(x).map(([name, server]) => ({
+					name,
+					online: server.online,
+					roughPing: Math.round(server.ping),
+					lastUpdated: server.lastUpdated
+				}));
+				setServers(v);
+			}
+		}, 1000);
+
+		return () => {
+			clearInterval(interval);
 		}
-	]);
+	}, [connector]);
 
 	return (
 		<ThemeProvider theme={darkMode ? DARK_THEME : LIGHT_THEME}>
@@ -49,8 +62,8 @@ function App() {
 													fontFamily: "monospace",
 													width: 85,
 													textAlign: "end",
-													color: server.online ? "lightgreen" : "red"
-												}}>{server.online ? "Online" : "Offline"}</Typography>
+													color: server.lastUpdated ? server.online ? "lightgreen" : "red" : "yellow"
+												}}>{server.lastUpdated ? (server.online ? "Online" : "Offline") : "Probing"}</Typography>
 											</div>
 										}
 									/>
