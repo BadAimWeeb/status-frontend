@@ -71,7 +71,7 @@ function App() {
 							let color = server.lastUpdated ? server.online ? "lightgreen" : "red" : "yellow";
 							let statusText = server.lastUpdated ? (server.online ? "Online" : "Offline") : "Probing";
 
-							if (server.pingFailure > 0 && server.pingFailure !== 0b1111111111) {
+							if ((server.pingFailure > 0 && server.pingFailure !== 0b1111111111) || server.roughPing > 500) {
 								color = "yellow";
 								statusText = "Degraded";
 							}
