@@ -17,6 +17,7 @@ function App() {
 		name: string;
 		online: boolean;
 		roughPing: number;
+		pingFailure: number;
 		lastUpdated: number;
 		info: {
 			ipv4: "NATIVE" | "NAT" | "TUNNEL" | "NONE";
@@ -35,7 +36,8 @@ function App() {
 					online: server.online,
 					roughPing: Math.round(server.ping),
 					lastUpdated: server.lastUpdated,
-					info: server.info
+					info: server.info,
+					pingFailure: server.pingFailure
 				}));
 				setServers(v);
 			}
@@ -66,6 +68,14 @@ function App() {
 							let altCountryName = server.info.country === "UK" ? "GB" : (server.info.country ?? "?");
 							let Flag = countryFlagIcons[altCountryName as keyof typeof countryFlagIcons];
 
+							let color = server.lastUpdated ? server.online ? "lightgreen" : "red" : "yellow";
+							let statusText = server.lastUpdated ? (server.online ? "Online" : "Offline") : "Probing";
+
+							if (server.pingFailure > 0 && server.pingFailure !== 0b1111111111) {
+								color = "yellow";
+								statusText = "Degraded";
+							}
+
 							return (
 								<Paper elevation={2} sx={{ mb: 2 }} key={`servers-${index}`}>
 									<ListItem alignItems="flex-start">
@@ -77,10 +87,10 @@ function App() {
 													<Typography variant="caption">{server.roughPing}ms</Typography>
 													<Typography variant="body1" sx={{
 														fontFamily: "monospace",
-														width: 85,
+														width: 100,
 														textAlign: "end",
-														color: server.lastUpdated ? server.online ? "lightgreen" : "red" : "yellow"
-													}}>{server.lastUpdated ? (server.online ? "Online" : "Offline") : "Probing"}</Typography>
+														color
+													}}>{statusText}</Typography>
 												</div>
 											}
 											secondary={
